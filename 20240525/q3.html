@@ -98,36 +98,26 @@
       iconSize: [24, 24], // size of the icon
       iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
     });
-    const pinkCircleIcon = L.icon({
-      iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="#F7D5DF" stroke="black" stroke-width="1" /></svg>'),
+    const orangeCircleIcon = L.icon({
+      iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="orange" stroke="black" stroke-width="1" /></svg>'),
       iconSize: [24, 24], // size of the icon
       iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
     });
 
     function pointCircleIcon(pointName) {
       switch (pointName) {
-        case '松江南京站':
-        case '南京復興站':
-        case '忠孝復興站':
-        case '忠孝新生站':
-        case '大安森林公園站':
-        case '大安站': return pinkCircleIcon;
+        case '西門站': return orangeCircleIcon;
         default: return whiteCircleIcon;
       }
     }
 
     function clickMarkerHandler(e, feature) {
       switch (feature.properties.NAME) {
-        case '松江南京站':
-        case '南京復興站':
-        case '忠孝復興站':
-        case '忠孝新生站':
-        case '大安森林公園站':
-        case '大安站': {
+        case '西門站': {
           let answer = prompt("請輸入答案：");
-          if (answer === '2') {
+          if (answer === '0') {
             alert("答對了！");
-            window.location.href = "q2.html";
+            window.location.href = "q4.html";
           } else {
             alert("ㄉㄟㄉㄟ");
           }
@@ -232,12 +222,10 @@
         });
       });
 
-    alert("歡迎來到「捷運猜幾勒」，請依序猜出四個數字。\n回答時，請點選謎題站點來回答。");
-
     var info = L.control();
     info.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-      this._div.innerHTML = '<h4>謎題</h4> <span>跟著光，連結相似，最後再從森林往上走一步</span>';
+      this._div.innerHTML = '<h4>謎題</h4> <span>與你遇見，<br />向南，與你出遊，<br />與你健身，<br />與你看電影，與你在快樂的迴圈裡</span>';
       return this._div;
     };
     info.addTo(map);

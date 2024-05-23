@@ -62,36 +62,6 @@
     const fromProjection = "EPSG:3826";
     const toProjection = "EPSG:4326";
 
-    // Load station points
-    let markersWithLabels = [];
-    const zoomThreshold = 14; // Define the zoom level threshold
-
-    // Function to add or remove labels based on zoom level
-    function updateLabels() {
-      const currentZoom = map.getZoom();
-      if (currentZoom >= zoomThreshold) {
-        // Add labels
-        markersWithLabels.forEach(marker => {
-          if (!map.hasLayer(marker.labelMarker)) {
-            map.addLayer(marker.labelMarker);
-          }
-          if (!map.hasLayer(marker.mainMarker)) {
-            map.addLayer(marker.mainMarker);
-          }
-        });
-      } else {
-        // Remove labels
-        markersWithLabels.forEach(marker => {
-          if (map.hasLayer(marker.labelMarker)) {
-            map.removeLayer(marker.labelMarker);
-          }
-          if (map.hasLayer(marker.mainMarker)) {
-            map.removeLayer(marker.mainMarker);
-          }
-        });
-      }
-    }
-
     // Define custom icon
     const whiteCircleIcon = L.icon({
       iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="white" stroke="black" stroke-width="1" /></svg>'),
@@ -100,6 +70,21 @@
     });
     const pinkCircleIcon = L.icon({
       iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="#F7D5DF" stroke="black" stroke-width="1" /></svg>'),
+      iconSize: [24, 24], // size of the icon
+      iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
+    });
+    const redCircleIcon = L.icon({
+      iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="red" stroke="black" stroke-width="1" /></svg>'),
+      iconSize: [24, 24], // size of the icon
+      iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
+    });
+    const orangeCircleIcon = L.icon({
+      iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="orange" stroke="black" stroke-width="1" /></svg>'),
+      iconSize: [24, 24], // size of the icon
+      iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
+    });
+    const yellowCircleIcon = L.icon({
+      iconUrl: 'data:image/svg+xml;base64,' + btoa('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32"><circle cx="16" cy="16" r="16" fill="#FFEF9F" stroke="black" stroke-width="1" /></svg>'),
       iconSize: [24, 24], // size of the icon
       iconAnchor: [12, 12], // point of the icon which will correspond to marker's location
     });
@@ -112,6 +97,15 @@
         case '忠孝新生站':
         case '大安森林公園站':
         case '大安站': return pinkCircleIcon;
+        case '板橋站':
+        case '府中站':
+        case '新埔站': return redCircleIcon;
+        case '台北車站':
+        case '臺大醫院站':
+        case '小南門站':
+        case '西門站': return orangeCircleIcon;
+        case '永春站':
+        case '松山站': return yellowCircleIcon;
         default: return whiteCircleIcon;
       }
     }
@@ -123,11 +117,20 @@
         case '忠孝復興站':
         case '忠孝新生站':
         case '大安森林公園站':
-        case '大安站': {
+        case '大安站':
+        case '板橋站':
+        case '府中站':
+        case '新埔站':
+        case '台北車站':
+        case '臺大醫院站':
+        case '小南門站':
+        case '西門站':
+        case '永春站':
+        case '松山站': {
           let answer = prompt("請輸入答案：");
-          if (answer === '2') {
+          if (answer === '1021') {
             alert("答對了！");
-            window.location.href = "q2.html";
+            //window.location.href = "q2.html";
           } else {
             alert("ㄉㄟㄉㄟ");
           }
@@ -142,28 +145,12 @@
           const coords = feature.geometry.coordinates;
           const [lng, lat] = proj4(fromProjection, toProjection, coords);
 
-          // Create a custom DivIcon with the station name
-          const divIcon = L.divIcon({
-            className: 'custom-div-icon',
-            html: `<div class="icon"></div><div class="label">${feature.properties.NAME}</div>`,
-            iconSize: [100, 32], // Adjust icon size as needed
-            iconAnchor: [-3, 16] // Adjust icon anchor to center the icon
-          });
-          const labelMarker = L.marker([lat, lng], { icon: divIcon }).addTo(map).on('click', function (e) {
-            clickMarkerHandler(e, feature);
-          });
-
           const mainMarker = L.marker([lat, lng], { icon: pointCircleIcon(feature.properties.NAME) }).addTo(map).on('click', function (e) {
             clickMarkerHandler(e, feature);
           });
 
-          markersWithLabels.push({ mainMarker, labelMarker });
         });
-        updateLabels();
       });
-
-    // Attach event listener for zoom changes
-    map.on('zoomend', updateLabels);
 
     // Load route lines
     // Function to validate and transform coordinates
@@ -232,12 +219,10 @@
         });
       });
 
-    alert("歡迎來到「捷運猜幾勒」，請依序猜出四個數字。\n回答時，請點選謎題站點來回答。");
-
     var info = L.control();
     info.onAdd = function (map) {
       this._div = L.DomUtil.create('div', 'info'); // create a div with a class "info"
-      this._div.innerHTML = '<h4>謎題</h4> <span>跟著光，連結相似，最後再從森林往上走一步</span>';
+      this._div.innerHTML = '<h4>謎題</h4> <span>我最愛的白白，<br />感謝我們當初勇敢地伸出手握住彼此，<br />成為彼此的光，除了照亮自己，也照亮對方。<br />希望這次的遊戲你玩得開心！</span>';
       return this._div;
     };
     info.addTo(map);

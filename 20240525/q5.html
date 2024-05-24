@@ -8,20 +8,66 @@
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/proj4js/2.7.5/proj4.js"></script>
+  <script src="https://unpkg.com/typeit@8.7.1/dist/index.umd.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap" rel="stylesheet">
 </head>
 
 <body>
   <style>
     body {
-      padding: 0;
       margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      /* Light grey background */
+      font-family: "Noto Sans TC", sans-serif;
+      font-optical-sizing: auto;
+      font-style: normal;
+      font-weight: 350;
+      line-height: 1.6;
+      color: #333;
+      /* Dark grey text */
+      max-width: 90%;
+      margin: 20px;
+      padding: 20px;
+      border-radius: 10px;
+      background: #fff;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      overflow-y: auto;
+      max-height: 90vh;
+      /* Ensure it doesn't overflow the viewport */
+    }
+
+    .proposal-text {
+      font-size: 1em;
+      text-align: justify;
+    }
+
+    @media (min-width: 600px) {
+      .proposal-text {
+        font-size: 1.2em;
+        /* Larger text for bigger screens */
+      }
     }
 
     html,
     body,
     #map {
+      position: absolute;
+      top: 0;
+      left: 0;
       height: 100%;
       width: 100vw;
+      z-index: -1;
     }
 
     .custom-div-icon {
@@ -50,9 +96,18 @@
       color: #777;
     }
   </style>
+  <audio id="audio">
+    <source src="song.mp3" type="audio/mpeg">
+  </audio>
   <div id="map" style="width: 100%; height: 100%;"></div>
+  <div class="container" style="display: none">
+    <div id="proposalText" class="proposal-text"></div>
+  </div>
   <script>
     const map = L.map('map').setView([25.0275, 121.5251], 14); // Center the map around Taipei
+    let routeLines = [];
+    let markers = [];
+    let infos = [];
 
     L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
       maxZoom: 19,
@@ -130,7 +185,56 @@
           let answer = prompt("請輸入答案：");
           if (answer === '1021') {
             alert("答對了！");
-            //window.location.href = "q2.html";
+            markers.forEach(marker => {
+              if (map.hasLayer(marker)) {
+                map.removeLayer(marker);
+              }
+            })
+            routeLines.forEach(route => {
+              if (map.hasLayer(route)) {
+                map.removeLayer(route);
+              }
+            })
+            infos.forEach(info => {
+              map.removeControl(info);
+            })
+            document.getElementById('audio').play();
+            document.querySelector('.container').style.display = 'block';
+            new TypeIt("#proposalText", {
+              speed: 50,
+              waitUntilVisible: true,
+              afterStep: function (instance) {
+                const container = document.querySelector('.container');
+                container.scrollTop = container.scrollHeight;
+              }
+            }).type("白白", { delay: 3000 })
+              .type("<br />今天是我們在一起的第一千三百四十五天，", { delay: 1000 })
+              .type("<br />在這縮小的地圖上，", { delay: 1000 })
+              .type("<br />有好多好多我們的足跡，", { delay: 1000 })
+              .type("<br />喜歡這些跟你的足跡，", { delay: 1000 })
+              .type("<br />一起累積出來的美好回憶❤️", { delay: 2000 })
+              .type("<br />我們在西門町看電影，", { delay: 1000 })
+              .type("<br />我們在松山站牽起彼此的手，", { delay: 1000 })
+              .type("<br />我們在府中站度過了許多的第一次。", { delay: 1000 })
+              .type("<br />十月二十一號是一個屬於我們的日子，", { delay: 1000 })
+              .type("<br />白白", { delay: 2000 })
+              .move(-2)
+              .type("未婚妻", { delay: 2000 })
+              .move(5)
+              .type("❤️", { delay: 1000 })
+              .type("<br />我想和你一起，", { delay: 1000 })
+              .type("<br />讓我們的足跡與回憶延伸，", { delay: 1000 })
+              .type("<br />一起邁入下一段旅程，", { delay: 1000 })
+              .type("<br />一起走到永遠。", { delay: 1000 })
+              .type("<br />", { delay: 1000 })
+              .type("<br />白白，", { delay: 1000 })
+              .type("<br />我愛你！", { delay: 2000 })
+              .type("<br />", { delay: 2000 })
+              .type("<br />", { delay: 2000 })
+              .type("妳願意嫁給我嗎🥹", { delay: 2000 })
+              .type("<br />", { delay: 1000 })
+              .type("<br />綸綸", { delay: 1000 })
+              .go();
           } else {
             alert("ㄉㄟㄉㄟ");
           }
@@ -149,6 +253,7 @@
             clickMarkerHandler(e, feature);
           });
 
+          markers.push(mainMarker);
         });
       });
 
@@ -204,13 +309,15 @@
           if (geometry.type === "LineString") {
             coords = processLineString(geometry.coordinates);
             if (coords.length > 0) {
-              L.polyline(coords, { color: routeColor(feature.properties.RouteName) }).addTo(map);
+              const route = L.polyline(coords, { color: routeColor(feature.properties.RouteName) }).addTo(map);
+              routeLines.push(route);
             }
           } else if (geometry.type === "MultiLineString") {
             coords = processMultiLineString(geometry.coordinates);
             coords.forEach(line => {
               if (line.length > 0) {
-                L.polyline(line, { color: routeColor(feature.properties.RouteName) }).addTo(map);
+                const route = L.polyline(line, { color: routeColor(feature.properties.RouteName) }).addTo(map);
+                routeLines.push(route);
               }
             });
           } else {
@@ -226,6 +333,8 @@
       return this._div;
     };
     info.addTo(map);
+
+    infos.push(info);
   </script>
 </body>
 
